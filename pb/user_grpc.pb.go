@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             v5.27.3
-// source: karimatiket-proto/user.proto
+// source: pb/user.proto
 
 package pb
 
@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
+	UserService_GetUsers_FullMethodName   = "/user.UserService/GetUsers"
 	UserService_GetUser_FullMethodName    = "/user.UserService/GetUser"
 	UserService_CreateUser_FullMethodName = "/user.UserService/CreateUser"
 	UserService_UpdateUser_FullMethodName = "/user.UserService/UpdateUser"
@@ -29,6 +30,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
+	GetUsers(ctx context.Context, in *UsersGetRequest, opts ...grpc.CallOption) (*UserResponses, error)
 	GetUser(ctx context.Context, in *UserGetRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	CreateUser(ctx context.Context, in *UserCreateRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	UpdateUser(ctx context.Context, in *UserUpdateRequest, opts ...grpc.CallOption) (*UserResponse, error)
@@ -41,6 +43,16 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
+}
+
+func (c *userServiceClient) GetUsers(ctx context.Context, in *UsersGetRequest, opts ...grpc.CallOption) (*UserResponses, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserResponses)
+	err := c.cc.Invoke(ctx, UserService_GetUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *userServiceClient) GetUser(ctx context.Context, in *UserGetRequest, opts ...grpc.CallOption) (*UserResponse, error) {
@@ -87,6 +99,7 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, in *UserDeleteReques
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
+	GetUsers(context.Context, *UsersGetRequest) (*UserResponses, error)
 	GetUser(context.Context, *UserGetRequest) (*UserResponse, error)
 	CreateUser(context.Context, *UserCreateRequest) (*UserResponse, error)
 	UpdateUser(context.Context, *UserUpdateRequest) (*UserResponse, error)
@@ -98,6 +111,9 @@ type UserServiceServer interface {
 type UnimplementedUserServiceServer struct {
 }
 
+func (UnimplementedUserServiceServer) GetUsers(context.Context, *UsersGetRequest) (*UserResponses, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
 func (UnimplementedUserServiceServer) GetUser(context.Context, *UserGetRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
@@ -121,6 +137,24 @@ type UnsafeUserServiceServer interface {
 
 func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 	s.RegisterService(&UserService_ServiceDesc, srv)
+}
+
+func _UserService_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UsersGetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUsers(ctx, req.(*UsersGetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -203,6 +237,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "GetUsers",
+			Handler:    _UserService_GetUsers_Handler,
+		},
+		{
 			MethodName: "GetUser",
 			Handler:    _UserService_GetUser_Handler,
 		},
@@ -220,5 +258,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "karimatiket-proto/user.proto",
+	Metadata: "pb/user.proto",
 }
